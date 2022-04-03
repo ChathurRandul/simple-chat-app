@@ -14,12 +14,13 @@ let messages = [
 ];
 
 app.get('/messages', (req, res) => {
-    res.send(messages)
+    res.send(messages);
 });
 
 app.post('/messages', (req, res) => {
-    messages.push(req.body)
-    res.sendStatus(200)
+    messages.push(req.body);
+    io.emit('message', req.body);
+    res.sendStatus(200);
 });
 
 io.on('connection', (socket) => {
