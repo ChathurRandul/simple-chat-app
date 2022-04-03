@@ -1,9 +1,10 @@
 const express = require('express');
-const req = require('express/lib/request');
-const res = require('express/lib/response');
+const bodyParser = require('body-parser');
 const app = express();
 
 app.use(express.static(__dirname));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 let messages = [
     { name: 'Tim', message: 'Hi' },
@@ -11,9 +12,14 @@ let messages = [
 ];
 
 app.get('/messages', (req, res) => {
-    res.send(messages);
+    res.send(messages)
+});
+
+app.post('/messages', (req, res) => {
+    messages.push(req.body)
+    res.sendStatus(200)
 });
 
 const server = app.listen(3000, () => {
-    console.log('server is listening on port', server.address().port);
+    console.log('server is listening on port', server.address().port)
 });
