@@ -1,56 +1,58 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
-const mongoose = require('mongoose');
-const { sendStatus } = require('express/lib/response');
+const express = require('express')
+const bodyParser = require('body-parser')
+const app = express()
+const http = require('http').Server(app)
+const io = require('socket.io')(http)
+const mongoose = require('mongoose')
+const { sendStatus } = require('express/lib/response')
+const res = require('express/lib/response')
 
-app.use(express.static(__dirname));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(__dirname))
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
 
-const dbUrl = 'mongodb+srv://user:user@simple-chat-app.qqgxd.mongodb.net/simple-chat-app?retryWrites=true&w=majority';
+mongoose.Promise = Promise
+
+const dbUrl = 'mongodb+srv://user:user@simple-chat-app.qqgxd.mongodb.net/simple-chat-app?retryWrites=true&w=majority'
 
 let Message = mongoose.model('Message', {
     name: String,
     message: String
-});
+})
 
 app.get('/messages', (req, res) => {
     Message.find({}, (err, messages) => {
-        res.send(messages);
-    });
-});
+        res.send(messages)
+    })
+})
 
-app.post('/messages', (req, res) => {
-    let message = new Message(req.body);
+app.post('/messages', async (req, res) => {
+    let message = new Message(req.body)
 
-    message.save((err) => {
-        if (err) sendStatus(500);
+    let savedMessage = await message.save()
+    console.log('saved')
+    let censored = await Message.findOne({ message: 'badword' })
 
-        Message.findOne({ message: 'badword' }, (err, censored) => {
-            if (censored) {
-                console.log('censored words found', censored);
-                Message.remove({ _id: censored._id }, (err) => {
-                    console.log('remove censored message');
-                });
-            }
-        });
+    if (censored)
+        await Message.remove({ _id: censored._id })
 
-        io.emit('message', req.body);
-        res.sendStatus(200);
-    });
-});
+    else
+        io.emit('message', req.body)
+    res.sendStatus(200)
+    // .catch((err) => {
+    //     res.sendStatus(500)
+    //     return console.error(err)
+    // })
+})
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
-});
+    console.log('a user connected')
+})
 
 mongoose.connect(dbUrl, (err) => {
-    console.log('mongo db connection', err);
-});
+    console.log('mongo db connection', err)
+})
 
 const server = http.listen(3000, () => {
     console.log('server is listening on port', server.address().port)
-});
+})
