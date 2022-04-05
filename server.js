@@ -4,6 +4,7 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const mongoose = require('mongoose');
+const { sendStatus } = require('express/lib/response');
 
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
@@ -11,19 +12,26 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 const dbUrl = 'mongodb+srv://user:user@simple-chat-app.qqgxd.mongodb.net/simple-chat-app?retryWrites=true&w=majority';
 
-let messages = [
-    { name: 'Tim', message: 'Hi' },
-    { name: 'Jane', message: 'Hello' }
-];
+let Message = mongoose.model('Message', {
+    name: String,
+    message: String
+});
 
 app.get('/messages', (req, res) => {
-    res.send(messages);
+    Message.find({}, (err, messages) => {
+        res.send(messages);
+    });
 });
 
 app.post('/messages', (req, res) => {
-    messages.push(req.body);
-    io.emit('message', req.body);
-    res.sendStatus(200);
+    let message = new Message(req.body);
+
+    message.save((err) => {
+        if (err) sendStatus(500);
+
+        io.emit('message', req.body);
+        res.sendStatus(200);
+    });
 });
 
 io.on('connection', (socket) => {
