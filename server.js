@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 
 mongoose.Promise = Promise
 
-const dbUrl = 'mongodb+srv://user:user@simple-chat-app.qqgxd.mongodb.net/simple-chat-app?retryWrites=true&w=majority'
+const dbUrl = 'mongodb://localhost/simple-chat-app'
 
 let Message = mongoose.model('Message', {
     name: String,
